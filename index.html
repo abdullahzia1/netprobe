@@ -9,171 +9,72 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                  Helvetica, Arial, sans-serif;
-    background: #f8fafc;
-    color: #1e293b;
-    line-height: 1.6;
+    background: #f8fafc; color: #1e293b; line-height: 1.6;
   }
-  a { color: #3b82f6; }
-
-  /* ── header ── */
   .header {
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
-    color: #fff;
-    padding: 48px 32px 40px;
-    text-align: center;
+    background: linear-gradient(135deg,#1e1b4b,#312e81 60%,#4338ca);
+    color:#fff; padding:48px 32px 40px; text-align:center;
   }
-  .header h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px; }
-  .header p  { margin-top: 8px; opacity: 0.8; font-size: 1rem; }
-  .header .meta { margin-top: 16px; font-size: 0.85rem; opacity: 0.6; }
-
-  /* ── layout ── */
-  .container { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
-
-  /* ── verdict card ── */
+  .header h1 { font-size:2.2rem; font-weight:800; }
+  .header p  { opacity:.8; margin-top:8px; }
+  .header .meta { margin-top:16px; font-size:.82rem; opacity:.6; }
+  .container { max-width:980px; margin:0 auto; padding:32px 16px 64px; }
   .verdict {
-    border-radius: 12px;
-    padding: 28px 32px;
-    margin-bottom: 36px;
-    background: #fee2e2;
-    border-left: 6px solid #7f1d1d;
+    border-radius:12px; padding:28px 32px; margin-bottom:36px;
+    background:#fee2e2; border-left:6px solid #7f1d1d;
   }
-  .verdict .icon { font-size: 2rem; }
-  .verdict h2 {
-    font-size: 1.4rem; color: #7f1d1d;
-    margin: 8px 0 4px;
-  }
-  .verdict p { color: #7f1d1d; opacity: 0.85; }
-
-  /* ── score tiles ── */
-  .tiles { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 36px; }
+  .verdict .icon { font-size:2rem; }
+  .verdict h2 { font-size:1.4rem; color:#7f1d1d; margin:8px 0 4px; }
+  .verdict p  { color:#7f1d1d; opacity:.85; }
+  .tiles { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:36px; }
   .tile {
-    flex: 1; min-width: 180px;
-    background: #fff;
-    border-radius: 10px;
-    padding: 20px 24px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08);
-    text-align: center;
+    flex:1; min-width:150px; background:#fff;
+    border-radius:10px; padding:20px 24px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08); text-align:center;
   }
-  .tile .num { font-size: 2.4rem; font-weight: 800; }
-  .tile .num.red  { color: #ef4444; }
-  .tile .num.amber { color: #f97316; }
-  .tile .num.green { color: #22c55e; }
-  .tile small { color: #64748b; font-size: 0.82rem; display: block; margin-top: 4px; }
-
-  /* ── section ── */
+  .tile .num { font-size:2.4rem; font-weight:800; }
+  .tile small { color:#64748b; font-size:.82rem; display:block; margin-top:4px; }
   .section {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08);
-    margin-bottom: 32px;
-    overflow: hidden;
+    background:#fff; border-radius:12px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);
+    margin-bottom:28px; overflow:hidden;
   }
   .section-header {
-    padding: 20px 28px;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    padding:20px 24px; border-bottom:1px solid #e2e8f0;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
   }
-  .section-header h2 { font-size: 1.15rem; font-weight: 700; }
-  .section-icon { font-size: 1.4rem; }
+  .section-header h2 { font-size:1.1rem; font-weight:700; }
   .section-desc {
-    padding: 12px 28px 20px;
-    color: #64748b;
-    font-size: 0.9rem;
-    border-bottom: 1px solid #f1f5f9;
+    padding:12px 24px 16px; color:#64748b;
+    font-size:.88rem; border-bottom:1px solid #f1f5f9;
   }
-
-  /* ── tables ── */
-  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  table { width:100%; border-collapse:collapse; font-size:.86rem; }
   th {
-    background: #f8fafc;
-    text-align: left;
-    padding: 11px 14px;
-    font-weight: 600;
-    color: #475569;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    background:#f8fafc; text-align:left; padding:10px 14px;
+    font-weight:600; color:#475569; border-bottom:1px solid #e2e8f0;
+    font-size:.78rem; text-transform:uppercase; letter-spacing:.04em;
   }
-  td {
-    padding: 12px 14px;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: top;
-  }
-  tr:last-child td { border-bottom: none; }
-  .row-warn td { background: #fff7ed; }
-  .row-detail td { background: #fff7ed; }
-
-  /* ── badges ── */
+  td { padding:11px 14px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  .row-warn td { background:#fff7ed; }
+  .row-crit td { background:#fff1f2; }
   .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 600;
+    display:inline-block; padding:3px 10px; border-radius:999px;
+    font-size:.76rem; font-weight:600;
   }
-  .badge.ok   { background: #dcfce7; color: #166534; }
-  .badge.warn { background: #fee2e2; color: #991b1b; }
-
-  /* ── detail box ── */
-  .detail-box {
-    background: #fff7ed;
-    border-left: 3px solid #f97316;
-    border-radius: 6px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    color: #78350f;
-  }
-
-  /* ── bar ── */
-  .bar-wrap {
-    display: flex; align-items: center; gap: 8px;
-    min-width: 140px;
-  }
-  .bar {
-    height: 8px; border-radius: 4px;
-    transition: width .3s;
-  }
-  .bar-label { font-size: 0.78rem; color: #64748b; min-width: 32px; }
-
-  /* ── verdict footer ── */
-  .verdict-pill {
-    display: inline-block;
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-top: 12px;
-  }
-  .pill-ok   { background: #dcfce7; color: #166534; }
-  .pill-warn { background: #fee2e2; color: #991b1b; }
-  .pill-amber{ background: #fef3c7; color: #92400e; }
-
-  /* ── explainer callout ── */
-  .callout {
-    background: #eff6ff;
-    border-left: 4px solid #3b82f6;
-    border-radius: 6px;
-    padding: 14px 18px;
-    font-size: 0.88rem;
-    color: #1e40af;
-    margin: 16px 28px 20px;
-  }
-
-  /* ── footer ── */
+  .badge.ok   { background:#dcfce7; color:#166534; }
+  .badge.warn { background:#fef3c7; color:#92400e; }
+  .badge.crit { background:#fee2e2; color:#991b1b; }
+  .bar-wrap { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .bar { height:8px; border-radius:4px; min-width:4px; max-width:160px; }
+  .bar-lbl { font-size:.78rem; color:#64748b; }
   .footer {
-    text-align: center;
-    padding: 32px;
-    font-size: 0.8rem;
-    color: #94a3b8;
+    text-align:center; padding:32px;
+    font-size:.8rem; color:#94a3b8;
   }
-
-  @media(max-width: 600px) {
-    .header h1 { font-size: 1.5rem; }
-    .tiles { flex-direction: column; }
-    td, th { padding: 8px 10px; }
+  @media(max-width:600px) {
+    .header h1 { font-size:1.5rem; }
+    .tiles { flex-direction:column; }
   }
 </style>
 </head>
@@ -181,441 +82,490 @@
 
 <div class="header">
   <h1>🌐 Internet Freedom Report</h1>
-  <p>An independent technical audit of your internet connection</p>
-  <div class="meta">Generated by NetProbe &nbsp;·&nbsp; 2026-02-23T05:50:34+0500</div>
+  <p>Independent technical audit of your internet connection — NetProbe v2</p>
+  <div class="meta">Generated: 2026-02-23T07:07:49+0500 &nbsp;·&nbsp; Scan duration: 48306 ms</div>
 </div>
 
 <div class="container">
 
-  <!-- VERDICT -->
   <div class="verdict">
     <div class="icon">🚨</div>
-    <h2>8 suspicious findings — strong signs of interference.</h2>
-    <p>Multiple independent tests flagged problems. Your internet connection is likely being filtered or monitored.</p>
+    <h2>39 suspicious finding(s) — strong signs of interference.</h2>
+    <p>Multiple independent tests flagged problems. Your connection is likely being filtered or monitored.</p>
   </div>
 
-  <!-- SCORE TILES -->
   <div class="tiles">
-    <div class="tile">
-      <div class="num red">2</div>
-      <strong>Blocked / Tampered Domains</strong>
-      <small>out of 10 tested</small>
-    </div>
-    <div class="tile">
-      <div class="num amber">1</div>
-      <strong>Proxy Warning Signals</strong>
-      <small>out of 4 proxy tests</small>
-    </div>
-    <div class="tile">
-      <div class="num red">5</div>
-      <strong>Speed Anomalies</strong>
-      <small>out of 8 comparisons</small>
-    </div>
-  </div>
+        <div class="tile">
+          <div class="num" style="color:#22c55e"></div>
+          <strong>DNS Censorship</strong>
+          <small>5 finding(s)</small>
+        </div>
+        <div class="tile">
+          <div class="num" style="color:#22c55e"></div>
+          <strong>Transparent Proxy Detection</strong>
+          <small>3 finding(s)</small>
+        </div>
+        <div class="tile">
+          <div class="num" style="color:#22c55e"></div>
+          <strong>TLS / Certificate Inspection</strong>
+          <small>10 finding(s)</small>
+        </div>
+        <div class="tile">
+          <div class="num" style="color:#22c55e"></div>
+          <strong>SNI Filtering Detection</strong>
+          <small>1 finding(s)</small>
+        </div>
+        <div class="tile">
+          <div class="num" style="color:#22c55e"></div>
+          <strong>Throttling Detection</strong>
+          <small>7 finding(s)</small>
+        </div>
+        <div class="tile">
+          <div class="num" style="color:#22c55e"></div>
+          <strong>Port Blocking Detection</strong>
+          <small>13 finding(s)</small>
+        </div></div>
 
-  <!-- DNS SECTION -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">🔍</span>
-      <div>
-        <h2>Domain Name Lookup (DNS) Test</h2>
-        <span class="pill-warn verdict-pill">
-          2 mismatch(es) found
-        </span>
+  
+    <div class="section">
+      <div class="section-header" style="border-left:5px solid #166534">
+        <div>
+          <h2>DNS Censorship</h2>
+          <p style="color:#64748b;font-size:0.88rem;margin-top:4px">Compares local ISP DNS answers against Google, Cloudflare, and Quad9. Also compares UDP vs TCP DNS to detect injection attacks.</p>
+        </div>
+        <div style="text-align:right;min-width:160px">
+          <div class="bar-wrap"><div class="bar" style="width:0%;background:#22c55e"></div><span class="bar-lbl">Clean</span></div>
+          <small style="color:#94a3b8">29469 ms · 5 finding(s)</small>
+        </div>
       </div>
+      <div class="section-desc">5 finding(s), worst severity: High 🔴</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Finding</th><th>Severity</th>
+            <th>Detail</th><th>Domain / IP</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr class="row-crit">
+          <td><strong>DNS mismatch for google.com</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>Your ISP says google.com is at 142.250.200.174, but Google/Cloudflare/Quad9 say it's at 142.250.187.78, 142.250.201.238, 142.250.71.110. These are in entirely different network blocks — very likely DNS tampering that redirects you to a different server.</td>
+          <td><small>google.com</small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>UDP/TCP DNS mismatch for google.com</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>Google's DNS server returned different IPs over UDP (142.250.202.142) vs TCP (142.251.37.142). TCP responses are cryptographically harder to forge — this mismatch strongly suggests DNS injection or packet manipulation on the UDP channel.</td>
+          <td><small>google.com</small></td>
+          <td><small>2026-02-23T07:08:07+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>UDP/TCP DNS mismatch for facebook.com</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>Google's DNS server returned different IPs over UDP (57.144.148.1) vs TCP (). TCP responses are cryptographically harder to forge — this mismatch strongly suggests DNS injection or packet manipulation on the UDP channel.</td>
+          <td><small>facebook.com</small></td>
+          <td><small>2026-02-23T07:08:13+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>UDP/TCP DNS mismatch for wikipedia.org</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>Google's DNS server returned different IPs over UDP (103.102.166.224) vs TCP (). TCP responses are cryptographically harder to forge — this mismatch strongly suggests DNS injection or packet manipulation on the UDP channel.</td>
+          <td><small>wikipedia.org</small></td>
+          <td><small>2026-02-23T07:08:07+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>DNS mismatch for youtube.com</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>Your ISP says youtube.com is at 142.251.37.78, but Google/Cloudflare/Quad9 say it's at 142.250.187.78, 192.178.211.136, 192.178.211.190, 192.178.211.91, 192.178.211.93. These are in entirely different network blocks — very likely DNS tampering that redirects you to a different server.</td>
+          <td><small>youtube.com</small></td>
+          <td><small>2026-02-23T07:07:54+0500</small></td>
+        </tr></tbody>
+      </table>
     </div>
-    <div class="section-desc">
-      <strong>What this tests:</strong> When you type a website address, your
-      computer first asks your internet provider (ISP) for directions to that
-      site's server. This test compares those directions to what two trusted,
-      independent sources say — Google and Cloudflare. If they disagree, your
-      ISP may be redirecting or blocking you.
+
+    <div class="section">
+      <div class="section-header" style="border-left:5px solid #166534">
+        <div>
+          <h2>Transparent Proxy Detection</h2>
+          <p style="color:#64748b;font-size:0.88rem;margin-top:4px">Detects silent traffic interception via header injection, double-Host tricks, HTTP/HTTPS content comparison, and TTL analysis.</p>
+        </div>
+        <div style="text-align:right;min-width:160px">
+          <div class="bar-wrap"><div class="bar" style="width:0%;background:#22c55e"></div><span class="bar-lbl">Clean</span></div>
+          <small style="color:#94a3b8">625 ms · 3 finding(s)</small>
+        </div>
+      </div>
+      <div class="section-desc">3 finding(s), worst severity: Critical 🚨</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Finding</th><th>Severity</th>
+            <th>Detail</th><th>Domain / IP</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr class="row-warn">
+          <td><strong>Double-Host header was silently accepted</strong></td>
+          <td><span class="badge warn">Medium</span></td>
+          <td>A deliberately malformed request with two conflicting 'Host' headers was accepted (HTTP/1.1 200 OK). RFC-compliant servers must reject this with HTTP 400. The request being accepted suggests a proxy stripped the duplicate header before forwarding.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>SSL error during HTTP/HTTPS body comparison</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TLS verification failed: HTTPSConnectionPool(host='example.com', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1032)'))). This can indicate that a proxy is intercepting and re-signing HTTPS traffic with its own certificate.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Transparent proxy is very likely present</strong></td>
+          <td><span class="badge crit">Critical</span></td>
+          <td>2 out of 4 independent tests flagged proxy-like behaviour. The probability of this being a false positive is very low.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-header" style="border-left:5px solid #166534">
+        <div>
+          <h2>TLS / Certificate Inspection</h2>
+          <p style="color:#64748b;font-size:0.88rem;margin-top:4px">Detects HTTPS MitM attacks by comparing certificate fingerprints via ISP vs direct paths, and auditing cert issuers for suspicious CAs.</p>
+        </div>
+        <div style="text-align:right;min-width:160px">
+          <div class="bar-wrap"><div class="bar" style="width:0%;background:#22c55e"></div><span class="bar-lbl">Clean</span></div>
+          <small style="color:#94a3b8">29508 ms · 10 finding(s)</small>
+        </div>
+      </div>
+      <div class="section-desc">10 finding(s), worst severity: Critical 🚨</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Finding</th><th>Severity</th>
+            <th>Detail</th><th>Domain / IP</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr class="row-crit">
+          <td><strong>Self-signed certificate for google.com</strong></td>
+          <td><span class="badge crit">Critical</span></td>
+          <td>google.com is presenting a certificate where the issuer and the subject are the same entity — meaning it was signed by itself, not by a trusted authority. Legitimate public websites never do this. This is a strong sign of a poorly configured interception proxy.</td>
+          <td><small>google.com</small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Self-signed certificate for twitter.com</strong></td>
+          <td><span class="badge crit">Critical</span></td>
+          <td>twitter.com is presenting a certificate where the issuer and the subject are the same entity — meaning it was signed by itself, not by a trusted authority. Legitimate public websites never do this. This is a strong sign of a poorly configured interception proxy.</td>
+          <td><small>twitter.com</small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Self-signed certificate for facebook.com</strong></td>
+          <td><span class="badge crit">Critical</span></td>
+          <td>facebook.com is presenting a certificate where the issuer and the subject are the same entity — meaning it was signed by itself, not by a trusted authority. Legitimate public websites never do this. This is a strong sign of a poorly configured interception proxy.</td>
+          <td><small>facebook.com</small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Self-signed certificate for wikipedia.org</strong></td>
+          <td><span class="badge crit">Critical</span></td>
+          <td>wikipedia.org is presenting a certificate where the issuer and the subject are the same entity — meaning it was signed by itself, not by a trusted authority. Legitimate public websites never do this. This is a strong sign of a poorly configured interception proxy.</td>
+          <td><small>wikipedia.org</small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Self-signed certificate for reddit.com</strong></td>
+          <td><span class="badge crit">Critical</span></td>
+          <td>reddit.com is presenting a certificate where the issuer and the subject are the same entity — meaning it was signed by itself, not by a trusted authority. Legitimate public websites never do this. This is a strong sign of a poorly configured interception proxy.</td>
+          <td><small>reddit.com</small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Self-signed certificate for youtube.com</strong></td>
+          <td><span class="badge crit">Critical</span></td>
+          <td>youtube.com is presenting a certificate where the issuer and the subject are the same entity — meaning it was signed by itself, not by a trusted authority. Legitimate public websites never do this. This is a strong sign of a poorly configured interception proxy.</td>
+          <td><small>youtube.com</small></td>
+          <td><small>2026-02-23T07:07:49+0500</small></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>TLS connection failed for signal.org</strong></td>
+          <td><span class="badge warn">Low</span></td>
+          <td>Could not complete a TLS handshake with signal.org. The site may be down, or port 443 may be blocked.</td>
+          <td><small>signal.org</small></td>
+          <td><small>2026-02-23T07:08:18+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Self-signed certificate for torproject.org</strong></td>
+          <td><span class="badge crit">Critical</span></td>
+          <td>torproject.org is presenting a certificate where the issuer and the subject are the same entity — meaning it was signed by itself, not by a trusted authority. Legitimate public websites never do this. This is a strong sign of a poorly configured interception proxy.</td>
+          <td><small>torproject.org</small></td>
+          <td><small>2026-02-23T07:08:14+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Self-signed certificate for bbc.com</strong></td>
+          <td><span class="badge crit">Critical</span></td>
+          <td>bbc.com is presenting a certificate where the issuer and the subject are the same entity — meaning it was signed by itself, not by a trusted authority. Legitimate public websites never do this. This is a strong sign of a poorly configured interception proxy.</td>
+          <td><small>bbc.com</small></td>
+          <td><small>2026-02-23T07:08:10+0500</small></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>TLS connection failed for protonmail.com</strong></td>
+          <td><span class="badge warn">Low</span></td>
+          <td>Could not complete a TLS handshake with protonmail.com. The site may be down, or port 443 may be blocked.</td>
+          <td><small>protonmail.com</small></td>
+          <td><small>2026-02-23T07:08:10+0500</small></td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-header" style="border-left:5px solid #166534">
+        <div>
+          <h2>SNI Filtering Detection</h2>
+          <p style="color:#64748b;font-size:0.88rem;margin-top:4px">Tests whether your ISP blocks or throttles connections based on the SNI field in the TLS handshake — the most common modern censorship technique.</p>
+        </div>
+        <div style="text-align:right;min-width:160px">
+          <div class="bar-wrap"><div class="bar" style="width:0%;background:#22c55e"></div><span class="bar-lbl">Clean</span></div>
+          <small style="color:#94a3b8">23214 ms · 1 finding(s)</small>
+        </div>
+      </div>
+      <div class="section-desc">3 finding(s), worst severity: High 🔴</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Finding</th><th>Severity</th>
+            <th>Detail</th><th>Domain / IP</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr class="row-crit">
+          <td><strong>Port 443 appears fully blocked for signal.org (104.18.10.47)</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TLS connections to 104.18.10.47 fail regardless of SNI value. This suggests IP-level blocking rather than SNI-based filtering. Combined with DNS findings, this may indicate layered censorship.</td>
+          <td><small>signal.org</small></td>
+          <td><small>2026-02-23T07:08:10+0500</small></td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-header" style="border-left:5px solid #166534">
+        <div>
+          <h2>Throttling Detection</h2>
+          <p style="color:#64748b;font-size:0.88rem;margin-top:4px">Measures download/upload speeds across HTTP vs HTTPS and small vs large payloads, then applies statistical tests to detect traffic shaping.</p>
+        </div>
+        <div style="text-align:right;min-width:160px">
+          <div class="bar-wrap"><div class="bar" style="width:0%;background:#22c55e"></div><span class="bar-lbl">Clean</span></div>
+          <small style="color:#94a3b8">48306 ms · 7 finding(s)</small>
+        </div>
+      </div>
+      <div class="section-desc">25 finding(s), worst severity: High 🔴</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Finding</th><th>Severity</th>
+            <th>Detail</th><th>Domain / IP</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr class="row-crit">
+          <td><strong>Selective throttling detected: Small HTTP vs HTTPS downloads</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>small_https averages 122 Kbps while the comparison channel reaches 589 Kbps (ratio=0.21). The slower channel is more than 40% slower — consistent with deliberate speed limiting by your ISP.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:37+0500</small></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Selective throttling detected: Large HTTP vs HTTPS downloads</strong></td>
+          <td><span class="badge warn">Medium</span></td>
+          <td>large_https averages 7470 Kbps while the comparison channel reaches 12552 Kbps (ratio=0.60). The slower channel is more than 40% slower — consistent with deliberate speed limiting by your ISP.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:37+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Selective throttling detected: Large vs small HTTPS downloads</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>small_https averages 122 Kbps while the comparison channel reaches 7470 Kbps (ratio=0.02). The slower channel is more than 60% slower — consistent with deliberate speed limiting by your ISP.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:37+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Selective throttling detected: Small vs large uploads</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>upload_small averages 22 Kbps while the comparison channel reaches 747 Kbps (ratio=0.03). The slower channel is more than 50% slower — consistent with deliberate speed limiting by your ISP.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:37+0500</small></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>High speed variance (jitter) for small_https</strong></td>
+          <td><span class="badge warn">Medium</span></td>
+          <td>Speed for 'small_https' swings wildly: mean=122 Kbps, CV=0.54. A coefficient of variation above 0.5 suggests burst-mode traffic shaping — your ISP may be allowing short speed bursts while throttling sustained throughput.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:37+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>High speed variance (jitter) for small_http</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>Speed for 'small_http' swings wildly: mean=589 Kbps, CV=1.29. A coefficient of variation above 0.5 suggests burst-mode traffic shaping — your ISP may be allowing short speed bursts while throttling sustained throughput.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:37+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>High speed variance (jitter) for large_http</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>Speed for 'large_http' swings wildly: mean=12552 Kbps, CV=0.89. A coefficient of variation above 0.5 suggests burst-mode traffic shaping — your ISP may be allowing short speed bursts while throttling sustained throughput.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:37+0500</small></td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-header" style="border-left:5px solid #166534">
+        <div>
+          <h2>Port Blocking Detection</h2>
+          <p style="color:#64748b;font-size:0.88rem;margin-top:4px">Tests TCP connectivity on ports used by VPNs, Tor, email, and messaging to detect protocol-level censorship by the ISP.</p>
+        </div>
+        <div style="text-align:right;min-width:160px">
+          <div class="bar-wrap"><div class="bar" style="width:0%;background:#22c55e"></div><span class="bar-lbl">Clean</span></div>
+          <small style="color:#94a3b8">21985 ms · 13 finding(s)</small>
+        </div>
+      </div>
+      <div class="section-desc">13 finding(s), worst severity: High 🔴</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Finding</th><th>Severity</th>
+            <th>Detail</th><th>Domain / IP</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr class="row-crit">
+          <td><strong>Port 1194 (VPN) appears BLOCKED</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TCP connections to port 1194 timed out on all tested hosts (vpn.mullvad.net, vpn.protonvpn.com). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks VPN traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Port 1723 (VPN) appears BLOCKED</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TCP connections to port 1723 timed out on all tested hosts (vpn.mullvad.net, vpn.protonvpn.com). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks VPN traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Port 51820 (VPN) appears BLOCKED</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TCP connections to port 51820 timed out on all tested hosts (vpn.mullvad.net, vpn.protonvpn.com). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks VPN traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Port 500 (VPN) appears BLOCKED</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TCP connections to port 500 timed out on all tested hosts (vpn.mullvad.net, vpn.protonvpn.com). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks VPN traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Port 9001 (Tor) appears BLOCKED</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TCP connections to port 9001 timed out on all tested hosts (104.244.72.115, 193.23.244.244). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks Tor traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Port 9030 (Tor) appears BLOCKED</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TCP connections to port 9030 timed out on all tested hosts (104.244.72.115, 193.23.244.244). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks Tor traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Port 9050 (Tor) appears BLOCKED</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TCP connections to port 9050 timed out on all tested hosts (104.244.72.115, 193.23.244.244). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks Tor traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-crit">
+          <td><strong>Port 9150 (Tor) appears BLOCKED</strong></td>
+          <td><span class="badge crit">High</span></td>
+          <td>TCP connections to port 9150 timed out on all tested hosts (104.244.72.115, 193.23.244.244). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks Tor traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Port 25 (Email) appears BLOCKED</strong></td>
+          <td><span class="badge warn">Medium</span></td>
+          <td>TCP connections to port 25 timed out on all tested hosts (smtp.gmail.com, smtp.mailgun.org). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks Email traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Port 993 (Email) appears BLOCKED</strong></td>
+          <td><span class="badge warn">Medium</span></td>
+          <td>TCP connections to port 993 timed out on all tested hosts (smtp.gmail.com, smtp.mailgun.org). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks Email traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Port 995 (Email) appears BLOCKED</strong></td>
+          <td><span class="badge warn">Medium</span></td>
+          <td>TCP connections to port 995 timed out on all tested hosts (smtp.gmail.com, smtp.mailgun.org). A timeout — unlike a refused connection — means the packets are being silently dropped, typically by a firewall or ISP-level filter. This blocks Email traffic that relies on this port.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Port 5223 (Messaging) — mixed results</strong></td>
+          <td><span class="badge warn">Low</span></td>
+          <td>0/2 probe hosts timed out. May be partial blocking or host availability issues.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr>
+        <tr class="row-warn">
+          <td><strong>Port 4430 (Messaging) — mixed results</strong></td>
+          <td><span class="badge warn">Low</span></td>
+          <td>0/2 probe hosts timed out. May be partial blocking or host availability issues.</td>
+          <td><small></small></td>
+          <td><small>2026-02-23T07:08:11+0500</small></td>
+        </tr></tbody>
+      </table>
+    </div>
+
+  
+
+  <div class="section">
+    <div class="section-header" style="border-left:5px solid #3b82f6">
+      <div><h2>🛡️ What Can You Do?</h2></div>
     </div>
     <table>
-      <thead>
-        <tr>
-          <th>Website</th>
-          <th>Your ISP's Answer</th>
-          <th>Google's Answer</th>
-          <th>Cloudflare's Answer</th>
-          <th>Result</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Finding type</th><th>Recommended action</th></tr></thead>
       <tbody>
-        
-        <tr class="">
-          <td><strong>google.com</strong></td>
-          <td>142.250.202.142</td>
-          <td>142.250.202.142</td><td>142.250.71.110</td>
-          <td><span class="badge ok">✓ Matching</span></td>
-        </tr>
-        
-        
-        <tr class="row-warn">
-          <td><strong>twitter.com</strong></td>
-          <td>172.66.0.227</td>
-          <td>151.101.194.146</td><td>151.101.194.146</td>
-          <td><span class="badge warn">✗ Mismatch</span></td>
-        </tr>
-        <tr class="row-detail"><td colspan="5"><div class="detail-box">💬 Your ISP returned a different server address than Google and Cloudflare did. This can mean the ISP is redirecting your traffic to a different destination without telling you.</div></td></tr>
-        
-        <tr class="">
-          <td><strong>facebook.com</strong></td>
-          <td>57.144.148.1</td>
-          <td>57.144.148.1</td><td>163.70.132.35</td>
-          <td><span class="badge ok">✓ Matching</span></td>
-        </tr>
-        
-        
-        <tr class="">
-          <td><strong>wikipedia.org</strong></td>
-          <td>103.102.166.224</td>
-          <td>103.102.166.224</td><td>103.102.166.224</td>
-          <td><span class="badge ok">✓ Matching</span></td>
-        </tr>
-        
-        
-        <tr class="">
-          <td><strong>reddit.com</strong></td>
-          <td>151.101.1.140, 151.101.129.140, 151.101.193.140, 151.101.65.140</td>
-          <td>151.101.1.140, 151.101.129.140, 151.101.193.140, 151.101.65.140</td><td>151.101.1.140, 151.101.129.140, 151.101.193.140, 151.101.65.140</td>
-          <td><span class="badge ok">✓ Matching</span></td>
-        </tr>
-        
-        
-        <tr class="row-warn">
-          <td><strong>youtube.com</strong></td>
-          <td>142.250.202.14</td>
-          <td>142.250.200.174</td><td>192.178.211.136, 192.178.211.190, 192.178.211.91, 192.178.211.93</td>
-          <td><span class="badge warn">✗ Mismatch</span></td>
-        </tr>
-        <tr class="row-detail"><td colspan="5"><div class="detail-box">💬 Your ISP returned a different server address than Google and Cloudflare did. This can mean the ISP is redirecting your traffic to a different destination without telling you.</div></td></tr>
-        
-        <tr class="">
-          <td><strong>signal.org</strong></td>
-          <td>104.18.10.47, 104.18.11.47</td>
-          <td>104.18.10.47, 104.18.11.47</td><td>104.18.10.47, 104.18.11.47</td>
-          <td><span class="badge ok">✓ Matching</span></td>
-        </tr>
-        
-        
-        <tr class="">
-          <td><strong>torproject.org</strong></td>
-          <td>116.202.120.165, 116.202.120.166, 204.8.99.144, 204.8.99.146, 95.216.163.36</td>
-          <td>116.202.120.165, 116.202.120.166, 204.8.99.144, 204.8.99.146, 95.216.163.36</td><td>116.202.120.165, 116.202.120.166, 204.8.99.144, 204.8.99.146, 95.216.163.36</td>
-          <td><span class="badge ok">✓ Matching</span></td>
-        </tr>
-        
-        
-        <tr class="">
-          <td><strong>bbc.com</strong></td>
-          <td>151.101.0.81, 151.101.128.81, 151.101.192.81, 151.101.64.81</td>
-          <td>151.101.0.81, 151.101.128.81, 151.101.192.81, 151.101.64.81</td><td>151.101.0.81, 151.101.128.81, 151.101.192.81, 151.101.64.81</td>
-          <td><span class="badge ok">✓ Matching</span></td>
-        </tr>
-        
-        
-        <tr class="">
-          <td><strong>protonmail.com</strong></td>
-          <td>185.70.42.12</td>
-          <td>185.70.42.12</td><td>185.70.42.12</td>
-          <td><span class="badge ok">✓ Matching</span></td>
-        </tr>
-        
-        
+        <tr><td><strong>DNS tampering</strong></td>
+            <td>Switch to DNS-over-HTTPS in your browser (Firefox: Settings → Privacy → DNS over HTTPS). Or manually set DNS to 1.1.1.1 or 8.8.8.8.</td></tr>
+        <tr><td><strong>TLS interception / MitM</strong></td>
+            <td>Use a VPN with certificate pinning. Verify certificates manually using browser developer tools. Report to your country's data protection authority.</td></tr>
+        <tr><td><strong>SNI filtering</strong></td>
+            <td>Enable Encrypted Client Hello (ECH) in your browser. Use Cloudflare's 1.1.1.1 app or WARP. Or use Tor Browser which hides SNI by default.</td></tr>
+        <tr><td><strong>Traffic throttling</strong></td>
+            <td>A VPN hides traffic type from the ISP. Document evidence with timestamps and report to your national telecom regulator.</td></tr>
+        <tr><td><strong>Port blocking</strong></td>
+            <td>Use VPNs that support port 443 (looks like HTTPS). Tor Browser with bridges bypasses most port blocks. Shadowsocks and V2Ray are also effective.</td></tr>
       </tbody>
     </table>
-  </div>
-
-  <!-- PROXY SECTION -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">🕵️</span>
-      <div>
-        <h2>Transparent Proxy Detection</h2>
-        <span class="pill-warn verdict-pill">
-          1 warning(s) — inconclusive, but worth monitoring.
-        </span>
-      </div>
-    </div>
-    <div class="section-desc">
-      <strong>What this tests:</strong> A "transparent proxy" is a hidden
-      middleman that secretly reads your unencrypted internet traffic —
-      without your knowledge or consent. These are sometimes used by ISPs or
-      governments for filtering, surveillance, or logging. Four different
-      techniques were used to detect one.
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Test</th>
-          <th>Result</th>
-          <th>What it means</th>
-          <th>Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        
-        <tr class="">
-          <td><strong>Header Inspection</strong><br>
-              <small style="color:#6b7280">We sent a web request and checked if extra hidden headers appeared — a common sign of a proxy reading your traffic.</small></td>
-          <td><span class="badge ok">✓ Passed</span></td>
-          <td>This test passed — no sign of interception.</td>
-          <td><small>2026-02-23T05:49:43+0500</small></td>
-        </tr>
-        
-        <tr class="row-warn">
-          <td><strong>Double Destination Test</strong><br>
-              <small style="color:#6b7280">We sent a deliberately malformed request. Normal servers reject it; transparent proxies silently fix and forward it.</small></td>
-          <td><span class="badge warn">✗ Flagged</span></td>
-          <td>This test raised a flag. On its own this is not conclusive, but combined with other results it suggests something is intercepting your traffic.</td>
-          <td><small>2026-02-23T05:49:43+0500</small></td>
-        </tr>
-        
-        <tr class="">
-          <td><strong>Content Tampering Check</strong><br>
-              <small style="color:#6b7280">We fetched the same webpage over encrypted (HTTPS) and unencrypted (HTTP) channels and compared the results. Differences can reveal content injection.</small></td>
-          <td><span class="badge ok">✓ Passed</span></td>
-          <td>This specific test could not run on your system — result excluded from verdict.</td>
-          <td><small>2026-02-23T05:49:43+0500</small></td>
-        </tr>
-        
-        <tr class="">
-          <td><strong>Network Route Analysis</strong><br>
-              <small style="color:#6b7280">We measured how many network hops separate you from a server on encrypted vs unencrypted ports. A mismatch suggests an extra device sits in your unencrypted traffic path.</small></td>
-          <td><span class="badge ok">✓ Passed</span></td>
-          <td>This test passed — no sign of interception.</td>
-          <td><small>2026-02-23T05:49:43+0500</small></td>
-        </tr>
-        
-      </tbody>
-    </table>
-  </div>
-
-  <!-- THROTTLING SECTION -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">🐢</span>
-      <div>
-        <h2>Speed & Throttling Test</h2>
-        <span class="pill-warn verdict-pill">
-          5 anomaly(ies) detected — selective throttling may be occurring.
-        </span>
-      </div>
-    </div>
-    <div class="section-desc">
-      <strong>What this tests:</strong> ISPs sometimes deliberately slow down
-      certain types of traffic — such as encrypted connections, streaming, or
-      video calls — while leaving others at full speed. This is called
-      "traffic shaping" or "throttling." We ran 3 rounds of speed tests
-      across different traffic types and compared the results.
-    </div>
-
-    <div class="callout">
-      💡 <strong>How to read this:</strong> If encrypted (HTTPS) traffic is
-      consistently much slower than unencrypted (HTTP) traffic to the same
-      server, that strongly suggests your ISP is artificially slowing down
-      your private/secure connections.
-    </div>
-
-    <div style="padding: 0 28px 20px;">
-      <h3 style="margin-bottom: 12px; font-size: 0.9rem; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">
-        Average Speeds Measured
-      </h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Traffic Type</th>
-            <th>Direction</th>
-            <th>Average Speed</th>
-          </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td>Small file — Encrypted (HTTPS)</td>
-          <td>⬇ Download</td>
-          <td><strong>93 Kbps</strong></td>
-        </tr>
-        
-        <tr>
-          <td>Small file — Unencrypted (HTTP)</td>
-          <td>⬇ Download</td>
-          <td><strong>109 Kbps</strong></td>
-        </tr>
-        
-        <tr>
-          <td>Large file — Encrypted (HTTPS)</td>
-          <td>⬇ Download</td>
-          <td><strong>7.4 Mbps</strong></td>
-        </tr>
-        
-        <tr>
-          <td>Large file — Unencrypted (HTTP)</td>
-          <td>⬇ Download</td>
-          <td><strong>10.5 Mbps</strong></td>
-        </tr>
-        
-        <tr>
-          <td>Small file — Upload</td>
-          <td>⬆ Upload</td>
-          <td><strong>6 Kbps</strong></td>
-        </tr>
-        
-        <tr>
-          <td>Large file — Upload</td>
-          <td>⬆ Upload</td>
-          <td><strong>350 Kbps</strong></td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div style="padding: 0 28px 28px;">
-      <h3 style="margin-bottom: 12px; font-size: 0.9rem; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">
-        Anomaly Analysis
-      </h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Comparison</th>
-            <th>Result</th>
-            <th>Severity</th>
-            <th>Plain-English Meaning</th>
-          </tr>
-        </thead>
-        <tbody>
-        <tr class="">
-          <td><strong>Small encrypted vs unencrypted downloads</strong></td>
-          <td><span class="badge ok">✓ Normal</span></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:73%;background:#ef4444"></div><span class="bar-label">73%</span></div></td>
-          <td>Speed is similar across both channels.</td>
-        </tr>
-        
-        <tr class="row-warn">
-          <td><strong>Large encrypted vs unencrypted downloads</strong></td>
-          <td><span class="badge warn">✗ Anomaly</span></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:54%;background:#f97316"></div><span class="bar-label">54%</span></div></td>
-          <td>One channel is significantly slower than the other — a classic sign of selective speed throttling.</td>
-        </tr>
-        
-        <tr class="row-warn">
-          <td><strong>Large vs small encrypted downloads</strong></td>
-          <td><span class="badge warn">✗ Anomaly</span></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:1%;background:#22c55e"></div><span class="bar-label">1%</span></div></td>
-          <td>One channel is significantly slower than the other — a classic sign of selective speed throttling.</td>
-        </tr>
-        
-        <tr class="">
-          <td><strong>Consistency of small encrypted downloads</strong></td>
-          <td><span class="badge ok">✓ Normal</span></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:5%;background:#22c55e"></div><span class="bar-label">5%</span></div></td>
-          <td>Speed is consistent for this traffic type.</td>
-        </tr>
-        
-        <tr class="row-warn">
-          <td><strong>Consistency of small unencrypted downloads</strong></td>
-          <td><span class="badge warn">✗ Anomaly</span></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:59%;background:#f97316"></div><span class="bar-label">59%</span></div></td>
-          <td>High variability — your speed swings wildly for this type of traffic, which can indicate the ISP is applying burst controls.</td>
-        </tr>
-        
-        <tr class="row-warn">
-          <td><strong>Consistency of large encrypted downloads</strong></td>
-          <td><span class="badge warn">✗ Anomaly</span></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:82%;background:#ef4444"></div><span class="bar-label">82%</span></div></td>
-          <td>High variability — your speed swings wildly for this type of traffic, which can indicate the ISP is applying burst controls.</td>
-        </tr>
-        
-        <tr class="">
-          <td><strong>Consistency of large unencrypted downloads</strong></td>
-          <td><span class="badge ok">✓ Normal</span></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:3%;background:#22c55e"></div><span class="bar-label">3%</span></div></td>
-          <td>Speed is consistent for this traffic type.</td>
-        </tr>
-        
-        <tr class="row-warn">
-          <td><strong>Small vs large uploads</strong></td>
-          <td><span class="badge warn">✗ Anomaly</span></td>
-          <td><div class="bar-wrap"><div class="bar" style="width:1%;background:#22c55e"></div><span class="bar-label">1%</span></div></td>
-          <td>One channel is significantly slower than the other — a classic sign of selective speed throttling.</td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- WHAT TO DO -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">🛡️</span>
-      <div><h2>What Can You Do?</h2></div>
-    </div>
-    <div style="padding: 20px 28px 28px;">
-      <p style="margin-bottom: 16px; color: #475569;">
-        If this report found issues, here are practical steps you can take:
-      </p>
-      <table>
-        <thead>
-          <tr><th>Finding</th><th>Suggested Action</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>DNS Tampering</strong></td>
-            <td>Change your DNS settings to use Cloudflare (1.1.1.1) or
-            Google (8.8.8.8) directly, or enable DNS-over-HTTPS in your
-            browser settings. This bypasses ISP DNS interference.</td>
-          </tr>
-          <tr>
-            <td><strong>Transparent Proxy</strong></td>
-            <td>Use a VPN or ensure you only access sites via HTTPS (look for
-            the padlock 🔒 in your browser). Encrypted traffic cannot be read
-            by a proxy.</td>
-          </tr>
-          <tr>
-            <td><strong>Throttling</strong></td>
-            <td>A VPN encrypts your traffic so your ISP can't see what type
-            it is, often restoring full speeds. Document and report throttling
-            to your national telecom regulator.</td>
-          </tr>
-          <tr>
-            <td><strong>All of the above</strong></td>
-            <td>Consider switching to a different ISP, or use the Tor Browser
-            for maximum anonymity. Share this report with digital rights
-            organizations in your region.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- METHODOLOGY -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">📋</span>
-      <div><h2>Methodology & Limitations</h2></div>
-    </div>
-    <div style="padding: 20px 28px 28px; font-size: 0.88rem; color: #475569;">
-      <ul style="padding-left: 20px; line-height: 2;">
-        <li>DNS comparisons were made against Google (8.8.8.8) and Cloudflare
-            (1.1.1.1) as trusted baselines.</li>
-        <li>Speed tests used Cloudflare's public speed test endpoint and
-            Google's infrastructure. Results may vary with network congestion.</li>
-        <li>All tests were conducted from the same device on the same network
-            at the time shown in each result.</li>
-        <li><strong>Limitations:</strong> Some DNS mismatches can be caused
-            by normal geo-routing (CDNs serving users from nearby data
-            centres). Speed differences can also reflect temporary congestion
-            rather than deliberate throttling. This tool provides evidence,
-            not legal proof.</li>
-      </ul>
-    </div>
   </div>
 
 </div>
 
 <div class="footer">
-  Generated by <strong>NetProbe</strong> — open-source internet censorship detection
-  &nbsp;·&nbsp; 2026-02-23T05:50:34+0500
+  Generated by <strong>NetProbe v2</strong> — open-source internet censorship detection &nbsp;·&nbsp;
+  <a href="https://github.com/abdullahzia1/netprobe">github.com/abdullahzia1/netprobe</a>
 </div>
 
 </body>

@@ -1,273 +1,226 @@
 """
-Generates a self-contained HTML report from a NetProbe JSON result file.
-Usage: python generate_report.py <input.json> <output.html>
+NetProbe v2 — HTML Report Generator
+
+Reads a RunResult JSON file (produced by --json flag or save_json()) and
+renders a self-contained, shareable HTML page suitable for non-technical
+readers.
+
+Usage:
+    python generate_report.py <input.json> <output.html>
+    
+The __main__.py also calls build_html() directly when --html is passed.
 """
+
+from __future__ import annotations
 
 import json
 import sys
 from pathlib import Path
 
 
-def load(path: str) -> dict:
-    return json.loads(Path(path).read_text())
+# ── severity helpers ──────────────────────────────────────────────────────────
+
+SEV_CLEAN    = 0
+SEV_INFO     = 10
+SEV_LOW      = 25
+SEV_MEDIUM   = 50
+SEV_HIGH     = 75
+SEV_CRITICAL = 100
 
 
-def badge(ok: bool, ok_text="Clear", bad_text="Suspicious") -> str:
-    if ok:
+def _sev_colour(score: int) -> str:
+    if score >= SEV_CRITICAL: return "#7f1d1d"
+    if score >= SEV_HIGH:     return "#991b1b"
+    if score >= SEV_MEDIUM:   return "#92400e"
+    if score >= SEV_LOW:      return "#854d0e"
+    return "#166534"
+
+
+def _sev_bg(score: int) -> str:
+    if score >= SEV_CRITICAL: return "#fee2e2"
+    if score >= SEV_HIGH:     return "#fee2e2"
+    if score >= SEV_MEDIUM:   return "#fef3c7"
+    if score >= SEV_LOW:      return "#fefce8"
+    return "#dcfce7"
+
+
+def _sev_int(f: dict) -> int:
+    """Extract severity as int regardless of whether it was serialized as
+    an int (IntEnum → asdict) or as a {"value": N} dict (custom serializer)."""
+    raw = f.get("severity", 0)
+    if isinstance(raw, dict):
+        return raw.get("value", 0)
+    return int(raw)
+
+
+def _badge(score: int, ok_text="✓ Clear", bad_text="✗ Issue") -> str:
+    if score <= SEV_INFO:
         return f'<span class="badge ok">{ok_text}</span>'
+    if score >= SEV_HIGH:
+        return f'<span class="badge crit">{bad_text}</span>'
     return f'<span class="badge warn">{bad_text}</span>'
 
 
-def severity_bar(ratio: float) -> str:
-    """Visual 0-100% severity bar."""
-    pct = min(int(ratio * 100), 100)
-    colour = "#22c55e" if pct < 40 else "#f97316" if pct < 70 else "#ef4444"
-    return (
-        f'<div class="bar-wrap">'
-        f'<div class="bar" style="width:{pct}%;background:{colour}"></div>'
-        f'<span class="bar-label">{pct}%</span>'
-        f'</div>'
-    )
+def _severity_label(score: int) -> str:
+    if score >= SEV_CRITICAL: return "Critical"
+    if score >= SEV_HIGH:     return "High"
+    if score >= SEV_MEDIUM:   return "Medium"
+    if score >= SEV_LOW:      return "Low"
+    if score >= SEV_INFO:     return "Info"
+    return "Clean"
 
 
-def fmt_kbps(kbps: float) -> str:
-    if kbps >= 1000:
-        return f"{kbps/1000:.1f} Mbps"
-    return f"{kbps:.0f} Kbps"
+def _bar(score: int) -> str:
+    pct = min(score, 100)
+    c   = "#22c55e" if pct < 25 else "#f97316" if pct < 75 else "#ef4444"
+    return (f'<div class="bar-wrap">'
+            f'<div class="bar" style="width:{pct}%;background:{c}"></div>'
+            f'<span class="bar-lbl">{_severity_label(score)}</span>'
+            f'</div>')
 
+
+# ── building blocks ───────────────────────────────────────────────────────────
+
+def _module_card(mod: dict) -> str:
+    name        = mod.get("module_name", "")
+    description = mod.get("module_description", "")
+    summary     = mod.get("summary", "")
+    score       = mod.get("score", 0)
+    dur         = mod.get("duration_ms", 0)
+    error       = mod.get("error", "")
+
+    flagged = [f for f in mod.get("findings", [])
+               if _sev_int(f) > SEV_INFO
+               and f.get("category", "") != "THROTTLE_SAMPLE"]
+
+    colour = _sev_colour(score)
+    bg     = _sev_bg(score)
+
+    rows = ""
+    for f in flagged:
+        sev_val = _sev_int(f)
+        rows += f"""
+        <tr class="{'row-crit' if sev_val >= SEV_HIGH else 'row-warn'}">
+          <td><strong>{f.get('title','')}</strong></td>
+          <td>{_badge(sev_val, bad_text=_severity_label(sev_val))}</td>
+          <td>{f.get('detail','')}</td>
+          <td><small>{f.get('domain','') or f.get('ip','')}</small></td>
+          <td><small>{f.get('timestamp','')}</small></td>
+        </tr>"""
+
+    if not rows:
+        rows = '<tr><td colspan="5" style="color:#166534;padding:16px 14px">✅ No issues detected in this module.</td></tr>'
+
+    if error:
+        rows = f'<tr><td colspan="5" style="color:#92400e;padding:16px 14px">⚠️ Module error: {error}</td></tr>'
+
+    return f"""
+    <div class="section">
+      <div class="section-header" style="border-left:5px solid {colour}">
+        <div>
+          <h2>{name}</h2>
+          <p style="color:#64748b;font-size:0.88rem;margin-top:4px">{description}</p>
+        </div>
+        <div style="text-align:right;min-width:160px">
+          {_bar(score)}
+          <small style="color:#94a3b8">{dur:.0f} ms · {len(flagged)} finding(s)</small>
+        </div>
+      </div>
+      <div class="section-desc">{summary}</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Finding</th><th>Severity</th>
+            <th>Detail</th><th>Domain / IP</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </div>"""
+
+
+def _speed_table(modules: list[dict]) -> str:
+    """Pull THROTTLE_SAMPLE findings and render a speed summary."""
+    samples = []
+    for mod in modules:
+        if mod.get("module_name") != "Throttling":
+            continue
+        for f in mod.get("findings", []):
+            if f.get("category") == "THROTTLE_SAMPLE":
+                raw = f.get("raw", {})
+                samples.append(raw)
+
+    if not samples:
+        return ""
+
+    rows = ""
+    for s in samples:
+        kbps  = s.get("kbps", 0)
+        label = s.get("label", "")
+        bts   = s.get("bytes", 0)
+        secs  = s.get("secs", 0)
+        speed_str = (f"{kbps/1000:.1f} Mbps" if kbps >= 1000
+                     else f"{kbps:.0f} Kbps")
+        rows += (f"<tr><td>{label}</td>"
+                 f"<td><strong>{speed_str}</strong></td>"
+                 f"<td>{bts:,} B</td><td>{secs}s</td></tr>")
+
+    return f"""
+    <div class="section">
+      <div class="section-header" style="border-left:5px solid #6366f1">
+        <div><h2>Speed Test Raw Data</h2></div>
+      </div>
+      <table>
+        <thead><tr><th>Traffic type</th><th>Speed</th><th>Bytes</th><th>Duration</th></tr></thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </div>"""
+
+
+# ── main builder ──────────────────────────────────────────────────────────────
 
 def build_html(data: dict) -> str:
-    generated = data.get("generated", "Unknown")
-    dns_data = data.get("dns", [])
-    proxy_data = data.get("proxy", {})
-    throttle_data = data.get("throttle", {})
+    ts       = data.get("timestamp", "Unknown")
+    dur      = data.get("duration_ms", 0)
+    modules  = data.get("modules", [])
 
-    # ── counts ──────────────────────────────────────────────────────────────
-    dns_flagged = [d for d in dns_data if d.get("mismatch")]
-    proxy_suspicious = [i for i in proxy_data.get("indicators", [])
-                        if i.get("suspicious")]
-    throttle_suspicious = [i for i in throttle_data.get("indicators", [])
-                           if i.get("suspicious")]
-    total_issues = (len(dns_flagged) + len(proxy_suspicious)
-                    + len(throttle_suspicious))
-    overall_ok = total_issues == 0
+    # Compute overall score & flagged count from the nested structure
+    all_findings = [f for m in modules for f in m.get("findings", [])
+                    if f.get("category", "") != "THROTTLE_SAMPLE"]
+    flagged      = [f for f in all_findings if _sev_int(f) > SEV_INFO]
+    overall      = max((_sev_int(f) for f in flagged), default=0)
 
-    # ── overall verdict ──────────────────────────────────────────────────────
-    if total_issues == 0:
-        verdict_colour = "#166534"
-        verdict_bg = "#dcfce7"
-        verdict_icon = "✅"
-        verdict_text = "No evidence of censorship or monitoring detected."
-        verdict_sub = ("All DNS lookups matched, no proxy was found, and "
-                       "internet speeds look normal.")
-    elif total_issues <= 3:
-        verdict_colour = "#92400e"
-        verdict_bg = "#fef3c7"
-        verdict_icon = "⚠️"
-        verdict_text = f"{total_issues} suspicious finding(s) — worth investigating."
-        verdict_sub = ("Some checks raised flags. This could be innocent "
-                       "(e.g. geo-routing) or real interference.")
+    # Verdict
+    if overall == 0:
+        v_icon, v_bg, v_col = "✅", "#dcfce7", "#166534"
+        v_text = "No evidence of censorship or monitoring detected."
+        v_sub  = "All checks passed. Your connection appears clean."
+    elif overall < SEV_HIGH:
+        v_icon, v_bg, v_col = "⚠️", "#fef3c7", "#92400e"
+        v_text = f"{len(flagged)} finding(s) — worth investigating."
+        v_sub  = "Some checks raised flags. May be geo-routing or real interference."
     else:
-        verdict_colour = "#7f1d1d"
-        verdict_bg = "#fee2e2"
-        verdict_icon = "🚨"
-        verdict_text = f"{total_issues} suspicious findings — strong signs of interference."
-        verdict_sub = ("Multiple independent tests flagged problems. "
-                       "Your internet connection is likely being filtered "
-                       "or monitored.")
+        v_icon, v_bg, v_col = "🚨", "#fee2e2", "#7f1d1d"
+        v_text = f"{len(flagged)} suspicious finding(s) — strong signs of interference."
+        v_sub  = ("Multiple independent tests flagged problems. Your connection "
+                  "is likely being filtered or monitored.")
 
-    # ── DNS rows ─────────────────────────────────────────────────────────────
-    dns_rows = ""
-    for d in dns_data:
-        domain = d["domain"]
-        mismatch = d.get("mismatch", False)
-        local_ips = (d.get("local_result") or {}).get("ips") or []
-        local_err = (d.get("local_result") or {}).get("error", "")
-        local_str = ", ".join(local_ips) if local_ips else (
-            "<em>Resolution failed</em>" if local_err else "—")
+    module_cards = "\n".join(_module_card(m) for m in modules)
+    speed_table  = _speed_table(modules)
 
-        pub_cells = ""
-        for pr in d.get("public_results", []):
-            pub_ips = ", ".join(pr.get("ips", [])) or pr.get("error", "—")
-            pub_cells += f"<td>{pub_ips}</td>"
+    # Score tiles per module
+    tiles = ""
+    for m in modules:
+        sc = m.get("score", 0)
+        col = "#22c55e" if sc == 0 else "#f97316" if sc < SEV_HIGH else "#ef4444"
+        tiles += f"""
+        <div class="tile">
+          <div class="num" style="color:{col}">{sc}</div>
+          <strong>{m.get('module_name','')}</strong>
+          <small>{len([f for f in m.get('findings',[]) if _sev_int(f) > SEV_INFO])} finding(s)</small>
+        </div>"""
 
-        if mismatch:
-            detail = d.get("mismatch_details", "")
-            # plain-English rewrite
-            if "failed" in detail.lower():
-                plain = ("Your ISP could not resolve this domain at all, "
-                         "but Google and Cloudflare found it fine. "
-                         "This is a classic sign of DNS-level blocking.")
-            else:
-                plain = ("Your ISP returned a different server address "
-                         "than Google and Cloudflare did. This can mean "
-                         "the ISP is redirecting your traffic to a "
-                         "different destination without telling you.")
-        else:
-            plain = ""
-
-        row_class = "row-warn" if mismatch else ""
-        dns_rows += f"""
-        <tr class="{row_class}">
-          <td><strong>{domain}</strong></td>
-          <td>{local_str}</td>
-          {pub_cells}
-          <td>{badge(not mismatch, "✓ Matching", "✗ Mismatch")}</td>
-        </tr>
-        {"" if not mismatch else f'<tr class="row-detail"><td colspan="5"><div class="detail-box">💬 {plain}</div></td></tr>'}
-        """
-
-    # ── proxy section ─────────────────────────────────────────────────────────
-    proxy_rows = ""
-    proxy_label_map = {
-        "Proxy Header Injection":
-            ("Header Inspection",
-             "We sent a web request and checked if extra hidden headers appeared — "
-             "a common sign of a proxy reading your traffic."),
-        "Double Host Header":
-            ("Double Destination Test",
-             "We sent a deliberately malformed request. Normal servers reject it; "
-             "transparent proxies silently fix and forward it."),
-        "HTTP vs HTTPS Body Comparison":
-            ("Content Tampering Check",
-             "We fetched the same webpage over encrypted (HTTPS) and unencrypted "
-             "(HTTP) channels and compared the results. Differences can reveal "
-             "content injection."),
-        "TTL Hop-Count Analysis":
-            ("Network Route Analysis",
-             "We measured how many network hops separate you from a server on "
-             "encrypted vs unencrypted ports. A mismatch suggests an extra device "
-             "sits in your unencrypted traffic path."),
-    }
-    for ind in proxy_data.get("indicators", []):
-        name = ind.get("test_name", "")
-        susp = ind.get("suspicious", False)
-        details = ind.get("details", "")
-        ts = ind.get("timestamp", "")
-        friendly_name, description = proxy_label_map.get(
-            name, (name, details))
-        row_class = "row-warn" if susp else ""
-
-        # make the raw details human-readable if test was okay
-        if "could not complete" in details.lower():
-            human_detail = "This specific test could not run on your system — result excluded from verdict."
-        elif susp:
-            human_detail = (
-                "This test raised a flag. On its own this is not conclusive, "
-                "but combined with other results it suggests something is "
-                "intercepting your traffic.")
-        else:
-            human_detail = "This test passed — no sign of interception."
-
-        proxy_rows += f"""
-        <tr class="{row_class}">
-          <td><strong>{friendly_name}</strong><br>
-              <small style="color:#6b7280">{description}</small></td>
-          <td>{badge(not susp, "✓ Passed", "✗ Flagged")}</td>
-          <td>{human_detail}</td>
-          <td><small>{ts}</small></td>
-        </tr>
-        """
-
-    proxy_verdict = proxy_data.get("summary", "")
-    proxy_ok = not proxy_data.get("proxy_likely", False)
-
-    # ── throttling section ────────────────────────────────────────────────────
-    # Build speed comparison table
-    def avg_speed(samples, label_prefix):
-        speeds = [s["speed_kbps"] for s in samples
-                  if s["label"].startswith(label_prefix) and s["speed_kbps"] > 0]
-        return sum(speeds) / len(speeds) if speeds else 0
-
-    dl = throttle_data.get("download_samples", [])
-    ul = throttle_data.get("upload_samples", [])
-
-    speeds = {
-        "small_https": avg_speed(dl, "small_https"),
-        "small_http":  avg_speed(dl, "small_http"),
-        "large_https": avg_speed(dl, "large_https"),
-        "large_http":  avg_speed(dl, "large_http"),
-        "upload_small": avg_speed(ul, "upload_small"),
-        "upload_large": avg_speed(ul, "upload_large"),
-    }
-
-    speed_rows = ""
-    speed_label_map = {
-        "small_https": ("Small file — Encrypted (HTTPS)", "download"),
-        "small_http":  ("Small file — Unencrypted (HTTP)", "download"),
-        "large_https": ("Large file — Encrypted (HTTPS)", "download"),
-        "large_http":  ("Large file — Unencrypted (HTTP)", "download"),
-        "upload_small": ("Small file — Upload", "upload"),
-        "upload_large": ("Large file — Upload", "upload"),
-    }
-    for key, (label, direction) in speed_label_map.items():
-        sp = speeds[key]
-        speed_rows += f"""
-        <tr>
-          <td>{label}</td>
-          <td>{"⬇ Download" if direction == "download" else "⬆ Upload"}</td>
-          <td><strong>{fmt_kbps(sp)}</strong></td>
-        </tr>
-        """
-
-    throttle_indicator_rows = ""
-    indicator_label_map = {
-        "small_http vs small_https":
-            "Small encrypted vs unencrypted downloads",
-        "large_http vs large_https":
-            "Large encrypted vs unencrypted downloads",
-        "large_https vs small_https":
-            "Large vs small encrypted downloads",
-        "small_https jitter":
-            "Consistency of small encrypted downloads",
-        "small_http jitter":
-            "Consistency of small unencrypted downloads",
-        "large_https jitter":
-            "Consistency of large encrypted downloads",
-        "large_http jitter":
-            "Consistency of large unencrypted downloads",
-        "upload_small vs upload_large":
-            "Small vs large uploads",
-    }
-
-    for ind in throttle_data.get("indicators", []):
-        comp = ind.get("comparison", "")
-        susp = ind.get("suspicious", False)
-        ratio = ind.get("ratio")
-        label = indicator_label_map.get(comp, comp)
-        row_class = "row-warn" if susp else ""
-
-        if "jitter" in comp:
-            what = (
-                "High variability — your speed swings wildly for this type of "
-                "traffic, which can indicate the ISP is applying burst controls."
-                if susp else
-                "Speed is consistent for this traffic type."
-            )
-        else:
-            what = (
-                "One channel is significantly slower than the other — "
-                "a classic sign of selective speed throttling."
-                if susp else
-                "Speed is similar across both channels."
-            )
-
-        ratio_display = severity_bar(ratio) if ratio is not None else "—"
-
-        throttle_indicator_rows += f"""
-        <tr class="{row_class}">
-          <td><strong>{label}</strong></td>
-          <td>{badge(not susp, "✓ Normal", "✗ Anomaly")}</td>
-          <td>{ratio_display}</td>
-          <td>{what}</td>
-        </tr>
-        """
-
-    throttle_verdict = throttle_data.get("summary", "")
-    throttle_issues = len(throttle_suspicious)
-
-    # ── assemble HTML ─────────────────────────────────────────────────────────
-    html = f"""<!DOCTYPE html>
+    return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -278,171 +231,72 @@ def build_html(data: dict) -> str:
   body {{
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                  Helvetica, Arial, sans-serif;
-    background: #f8fafc;
-    color: #1e293b;
-    line-height: 1.6;
+    background: #f8fafc; color: #1e293b; line-height: 1.6;
   }}
-  a {{ color: #3b82f6; }}
-
-  /* ── header ── */
   .header {{
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
-    color: #fff;
-    padding: 48px 32px 40px;
-    text-align: center;
+    background: linear-gradient(135deg,#1e1b4b,#312e81 60%,#4338ca);
+    color:#fff; padding:48px 32px 40px; text-align:center;
   }}
-  .header h1 {{ font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px; }}
-  .header p  {{ margin-top: 8px; opacity: 0.8; font-size: 1rem; }}
-  .header .meta {{ margin-top: 16px; font-size: 0.85rem; opacity: 0.6; }}
-
-  /* ── layout ── */
-  .container {{ max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }}
-
-  /* ── verdict card ── */
+  .header h1 {{ font-size:2.2rem; font-weight:800; }}
+  .header p  {{ opacity:.8; margin-top:8px; }}
+  .header .meta {{ margin-top:16px; font-size:.82rem; opacity:.6; }}
+  .container {{ max-width:980px; margin:0 auto; padding:32px 16px 64px; }}
   .verdict {{
-    border-radius: 12px;
-    padding: 28px 32px;
-    margin-bottom: 36px;
-    background: {verdict_bg};
-    border-left: 6px solid {verdict_colour};
+    border-radius:12px; padding:28px 32px; margin-bottom:36px;
+    background:{v_bg}; border-left:6px solid {v_col};
   }}
-  .verdict .icon {{ font-size: 2rem; }}
-  .verdict h2 {{
-    font-size: 1.4rem; color: {verdict_colour};
-    margin: 8px 0 4px;
-  }}
-  .verdict p {{ color: {verdict_colour}; opacity: 0.85; }}
-
-  /* ── score tiles ── */
-  .tiles {{ display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 36px; }}
+  .verdict .icon {{ font-size:2rem; }}
+  .verdict h2 {{ font-size:1.4rem; color:{v_col}; margin:8px 0 4px; }}
+  .verdict p  {{ color:{v_col}; opacity:.85; }}
+  .tiles {{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:36px; }}
   .tile {{
-    flex: 1; min-width: 180px;
-    background: #fff;
-    border-radius: 10px;
-    padding: 20px 24px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08);
-    text-align: center;
+    flex:1; min-width:150px; background:#fff;
+    border-radius:10px; padding:20px 24px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08); text-align:center;
   }}
-  .tile .num {{ font-size: 2.4rem; font-weight: 800; }}
-  .tile .num.red  {{ color: #ef4444; }}
-  .tile .num.amber {{ color: #f97316; }}
-  .tile .num.green {{ color: #22c55e; }}
-  .tile small {{ color: #64748b; font-size: 0.82rem; display: block; margin-top: 4px; }}
-
-  /* ── section ── */
+  .tile .num {{ font-size:2.4rem; font-weight:800; }}
+  .tile small {{ color:#64748b; font-size:.82rem; display:block; margin-top:4px; }}
   .section {{
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08);
-    margin-bottom: 32px;
-    overflow: hidden;
+    background:#fff; border-radius:12px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);
+    margin-bottom:28px; overflow:hidden;
   }}
   .section-header {{
-    padding: 20px 28px;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    padding:20px 24px; border-bottom:1px solid #e2e8f0;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
   }}
-  .section-header h2 {{ font-size: 1.15rem; font-weight: 700; }}
-  .section-icon {{ font-size: 1.4rem; }}
+  .section-header h2 {{ font-size:1.1rem; font-weight:700; }}
   .section-desc {{
-    padding: 12px 28px 20px;
-    color: #64748b;
-    font-size: 0.9rem;
-    border-bottom: 1px solid #f1f5f9;
+    padding:12px 24px 16px; color:#64748b;
+    font-size:.88rem; border-bottom:1px solid #f1f5f9;
   }}
-
-  /* ── tables ── */
-  table {{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }}
+  table {{ width:100%; border-collapse:collapse; font-size:.86rem; }}
   th {{
-    background: #f8fafc;
-    text-align: left;
-    padding: 11px 14px;
-    font-weight: 600;
-    color: #475569;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    background:#f8fafc; text-align:left; padding:10px 14px;
+    font-weight:600; color:#475569; border-bottom:1px solid #e2e8f0;
+    font-size:.78rem; text-transform:uppercase; letter-spacing:.04em;
   }}
-  td {{
-    padding: 12px 14px;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: top;
-  }}
-  tr:last-child td {{ border-bottom: none; }}
-  .row-warn td {{ background: #fff7ed; }}
-  .row-detail td {{ background: #fff7ed; }}
-
-  /* ── badges ── */
+  td {{ padding:11px 14px; border-bottom:1px solid #f1f5f9; vertical-align:top; }}
+  tr:last-child td {{ border-bottom:none; }}
+  .row-warn td {{ background:#fff7ed; }}
+  .row-crit td {{ background:#fff1f2; }}
   .badge {{
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 600;
+    display:inline-block; padding:3px 10px; border-radius:999px;
+    font-size:.76rem; font-weight:600;
   }}
-  .badge.ok   {{ background: #dcfce7; color: #166534; }}
-  .badge.warn {{ background: #fee2e2; color: #991b1b; }}
-
-  /* ── detail box ── */
-  .detail-box {{
-    background: #fff7ed;
-    border-left: 3px solid #f97316;
-    border-radius: 6px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    color: #78350f;
-  }}
-
-  /* ── bar ── */
-  .bar-wrap {{
-    display: flex; align-items: center; gap: 8px;
-    min-width: 140px;
-  }}
-  .bar {{
-    height: 8px; border-radius: 4px;
-    transition: width .3s;
-  }}
-  .bar-label {{ font-size: 0.78rem; color: #64748b; min-width: 32px; }}
-
-  /* ── verdict footer ── */
-  .verdict-pill {{
-    display: inline-block;
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-top: 12px;
-  }}
-  .pill-ok   {{ background: #dcfce7; color: #166534; }}
-  .pill-warn {{ background: #fee2e2; color: #991b1b; }}
-  .pill-amber{{ background: #fef3c7; color: #92400e; }}
-
-  /* ── explainer callout ── */
-  .callout {{
-    background: #eff6ff;
-    border-left: 4px solid #3b82f6;
-    border-radius: 6px;
-    padding: 14px 18px;
-    font-size: 0.88rem;
-    color: #1e40af;
-    margin: 16px 28px 20px;
-  }}
-
-  /* ── footer ── */
+  .badge.ok   {{ background:#dcfce7; color:#166534; }}
+  .badge.warn {{ background:#fef3c7; color:#92400e; }}
+  .badge.crit {{ background:#fee2e2; color:#991b1b; }}
+  .bar-wrap {{ display:flex; align-items:center; gap:8px; margin-bottom:4px; }}
+  .bar {{ height:8px; border-radius:4px; min-width:4px; max-width:160px; }}
+  .bar-lbl {{ font-size:.78rem; color:#64748b; }}
   .footer {{
-    text-align: center;
-    padding: 32px;
-    font-size: 0.8rem;
-    color: #94a3b8;
+    text-align:center; padding:32px;
+    font-size:.8rem; color:#94a3b8;
   }}
-
-  @media(max-width: 600px) {{
-    .header h1 {{ font-size: 1.5rem; }}
-    .tiles {{ flex-direction: column; }}
-    td, th {{ padding: 8px 10px; }}
+  @media(max-width:600px) {{
+    .header h1 {{ font-size:1.5rem; }}
+    .tiles {{ flex-direction:column; }}
   }}
 </style>
 </head>
@@ -450,252 +304,66 @@ def build_html(data: dict) -> str:
 
 <div class="header">
   <h1>🌐 Internet Freedom Report</h1>
-  <p>An independent technical audit of your internet connection</p>
-  <div class="meta">Generated by NetProbe &nbsp;·&nbsp; {generated}</div>
+  <p>Independent technical audit of your internet connection — NetProbe v2</p>
+  <div class="meta">Generated: {ts} &nbsp;·&nbsp; Scan duration: {dur:.0f} ms</div>
 </div>
 
 <div class="container">
 
-  <!-- VERDICT -->
   <div class="verdict">
-    <div class="icon">{verdict_icon}</div>
-    <h2>{verdict_text}</h2>
-    <p>{verdict_sub}</p>
+    <div class="icon">{v_icon}</div>
+    <h2>{v_text}</h2>
+    <p>{v_sub}</p>
   </div>
 
-  <!-- SCORE TILES -->
-  <div class="tiles">
-    <div class="tile">
-      <div class="num {'red' if dns_flagged else 'green'}">{len(dns_flagged)}</div>
-      <strong>Blocked / Tampered Domains</strong>
-      <small>out of {len(dns_data)} tested</small>
-    </div>
-    <div class="tile">
-      <div class="num {'amber' if proxy_suspicious else 'green'}">{len(proxy_suspicious)}</div>
-      <strong>Proxy Warning Signals</strong>
-      <small>out of 4 proxy tests</small>
-    </div>
-    <div class="tile">
-      <div class="num {'red' if throttle_issues >= 3 else 'amber' if throttle_issues else 'green'}">{throttle_issues}</div>
-      <strong>Speed Anomalies</strong>
-      <small>out of {len(throttle_data.get('indicators', []))} comparisons</small>
-    </div>
-  </div>
+  <div class="tiles">{tiles}</div>
 
-  <!-- DNS SECTION -->
+  {module_cards}
+
+  {speed_table}
+
   <div class="section">
-    <div class="section-header">
-      <span class="section-icon">🔍</span>
-      <div>
-        <h2>Domain Name Lookup (DNS) Test</h2>
-        <span class="{'pill-warn' if dns_flagged else 'pill-ok'} verdict-pill">
-          {len(dns_flagged)} mismatch(es) found
-        </span>
-      </div>
-    </div>
-    <div class="section-desc">
-      <strong>What this tests:</strong> When you type a website address, your
-      computer first asks your internet provider (ISP) for directions to that
-      site's server. This test compares those directions to what two trusted,
-      independent sources say — Google and Cloudflare. If they disagree, your
-      ISP may be redirecting or blocking you.
+    <div class="section-header" style="border-left:5px solid #3b82f6">
+      <div><h2>🛡️ What Can You Do?</h2></div>
     </div>
     <table>
-      <thead>
-        <tr>
-          <th>Website</th>
-          <th>Your ISP's Answer</th>
-          <th>Google's Answer</th>
-          <th>Cloudflare's Answer</th>
-          <th>Result</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Finding type</th><th>Recommended action</th></tr></thead>
       <tbody>
-        {dns_rows}
+        <tr><td><strong>DNS tampering</strong></td>
+            <td>Switch to DNS-over-HTTPS in your browser (Firefox: Settings → Privacy → DNS over HTTPS). Or manually set DNS to 1.1.1.1 or 8.8.8.8.</td></tr>
+        <tr><td><strong>TLS interception / MitM</strong></td>
+            <td>Use a VPN with certificate pinning. Verify certificates manually using browser developer tools. Report to your country's data protection authority.</td></tr>
+        <tr><td><strong>SNI filtering</strong></td>
+            <td>Enable Encrypted Client Hello (ECH) in your browser. Use Cloudflare's 1.1.1.1 app or WARP. Or use Tor Browser which hides SNI by default.</td></tr>
+        <tr><td><strong>Traffic throttling</strong></td>
+            <td>A VPN hides traffic type from the ISP. Document evidence with timestamps and report to your national telecom regulator.</td></tr>
+        <tr><td><strong>Port blocking</strong></td>
+            <td>Use VPNs that support port 443 (looks like HTTPS). Tor Browser with bridges bypasses most port blocks. Shadowsocks and V2Ray are also effective.</td></tr>
       </tbody>
     </table>
-  </div>
-
-  <!-- PROXY SECTION -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">🕵️</span>
-      <div>
-        <h2>Transparent Proxy Detection</h2>
-        <span class="{'pill-warn' if proxy_suspicious else 'pill-ok'} verdict-pill">
-          {len(proxy_suspicious)} warning(s) — {proxy_verdict.split("—")[-1].strip() if "—" in proxy_verdict else proxy_verdict}
-        </span>
-      </div>
-    </div>
-    <div class="section-desc">
-      <strong>What this tests:</strong> A "transparent proxy" is a hidden
-      middleman that secretly reads your unencrypted internet traffic —
-      without your knowledge or consent. These are sometimes used by ISPs or
-      governments for filtering, surveillance, or logging. Four different
-      techniques were used to detect one.
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Test</th>
-          <th>Result</th>
-          <th>What it means</th>
-          <th>Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        {proxy_rows}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- THROTTLING SECTION -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">🐢</span>
-      <div>
-        <h2>Speed & Throttling Test</h2>
-        <span class="{'pill-warn' if throttle_issues >= 2 else 'pill-amber' if throttle_issues else 'pill-ok'} verdict-pill">
-          {throttle_verdict}
-        </span>
-      </div>
-    </div>
-    <div class="section-desc">
-      <strong>What this tests:</strong> ISPs sometimes deliberately slow down
-      certain types of traffic — such as encrypted connections, streaming, or
-      video calls — while leaving others at full speed. This is called
-      "traffic shaping" or "throttling." We ran {3} rounds of speed tests
-      across different traffic types and compared the results.
-    </div>
-
-    <div class="callout">
-      💡 <strong>How to read this:</strong> If encrypted (HTTPS) traffic is
-      consistently much slower than unencrypted (HTTP) traffic to the same
-      server, that strongly suggests your ISP is artificially slowing down
-      your private/secure connections.
-    </div>
-
-    <div style="padding: 0 28px 20px;">
-      <h3 style="margin-bottom: 12px; font-size: 0.9rem; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">
-        Average Speeds Measured
-      </h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Traffic Type</th>
-            <th>Direction</th>
-            <th>Average Speed</th>
-          </tr>
-        </thead>
-        <tbody>{speed_rows}</tbody>
-      </table>
-    </div>
-
-    <div style="padding: 0 28px 28px;">
-      <h3 style="margin-bottom: 12px; font-size: 0.9rem; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">
-        Anomaly Analysis
-      </h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Comparison</th>
-            <th>Result</th>
-            <th>Severity</th>
-            <th>Plain-English Meaning</th>
-          </tr>
-        </thead>
-        <tbody>{throttle_indicator_rows}</tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- WHAT TO DO -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">🛡️</span>
-      <div><h2>What Can You Do?</h2></div>
-    </div>
-    <div style="padding: 20px 28px 28px;">
-      <p style="margin-bottom: 16px; color: #475569;">
-        If this report found issues, here are practical steps you can take:
-      </p>
-      <table>
-        <thead>
-          <tr><th>Finding</th><th>Suggested Action</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>DNS Tampering</strong></td>
-            <td>Change your DNS settings to use Cloudflare (1.1.1.1) or
-            Google (8.8.8.8) directly, or enable DNS-over-HTTPS in your
-            browser settings. This bypasses ISP DNS interference.</td>
-          </tr>
-          <tr>
-            <td><strong>Transparent Proxy</strong></td>
-            <td>Use a VPN or ensure you only access sites via HTTPS (look for
-            the padlock 🔒 in your browser). Encrypted traffic cannot be read
-            by a proxy.</td>
-          </tr>
-          <tr>
-            <td><strong>Throttling</strong></td>
-            <td>A VPN encrypts your traffic so your ISP can't see what type
-            it is, often restoring full speeds. Document and report throttling
-            to your national telecom regulator.</td>
-          </tr>
-          <tr>
-            <td><strong>All of the above</strong></td>
-            <td>Consider switching to a different ISP, or use the Tor Browser
-            for maximum anonymity. Share this report with digital rights
-            organizations in your region.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- METHODOLOGY -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">📋</span>
-      <div><h2>Methodology & Limitations</h2></div>
-    </div>
-    <div style="padding: 20px 28px 28px; font-size: 0.88rem; color: #475569;">
-      <ul style="padding-left: 20px; line-height: 2;">
-        <li>DNS comparisons were made against Google (8.8.8.8) and Cloudflare
-            (1.1.1.1) as trusted baselines.</li>
-        <li>Speed tests used Cloudflare's public speed test endpoint and
-            Google's infrastructure. Results may vary with network congestion.</li>
-        <li>All tests were conducted from the same device on the same network
-            at the time shown in each result.</li>
-        <li><strong>Limitations:</strong> Some DNS mismatches can be caused
-            by normal geo-routing (CDNs serving users from nearby data
-            centres). Speed differences can also reflect temporary congestion
-            rather than deliberate throttling. This tool provides evidence,
-            not legal proof.</li>
-      </ul>
-    </div>
   </div>
 
 </div>
 
 <div class="footer">
-  Generated by <strong>NetProbe</strong> — open-source internet censorship detection
-  &nbsp;·&nbsp; {generated}
+  Generated by <strong>NetProbe v2</strong> — open-source internet censorship detection &nbsp;·&nbsp;
+  <a href="https://github.com/abdullahzia1/netprobe">github.com/abdullahzia1/netprobe</a>
 </div>
 
 </body>
 </html>
 """
-    return html
 
 
-def main():
+# ── entry point ───────────────────────────────────────────────────────────────
+
+def main() -> None:
     if len(sys.argv) < 3:
         print("Usage: python generate_report.py <input.json> <output.html>")
         sys.exit(1)
-    data = load(sys.argv[1])
+    data = json.loads(Path(sys.argv[1]).read_text())
     html = build_html(data)
-    out = Path(sys.argv[2])
+    out  = Path(sys.argv[2])
     out.write_text(html, encoding="utf-8")
     print(f"Report written to {out.resolve()}")
 

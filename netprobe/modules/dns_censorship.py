@@ -1,194 +1,269 @@
 """
 DNS Censorship Detection Module
 
-Compares DNS resolution results from the local ISP resolver against trusted
-public resolvers (Google 8.8.8.8, Cloudflare 1.1.1.1) to surface tampering,
-injection, or blocking.  Optionally probes HTTP/HTTPS reachability.
+Concurrently resolves each domain against the local/ISP resolver and multiple
+trusted public resolvers (Google, Cloudflare, Quad9).  DNS answers that
+diverge significantly are flagged as potential tampering.
+
+Additionally compares UDP vs TCP DNS responses for the same domain —
+TCP is much harder to forge/inject, so a mismatch is strong evidence of
+DNS injection on the UDP channel.
+
+Optional: HTTP/HTTPS reachability test per domain.
 """
 
 from __future__ import annotations
 
+import asyncio
 import socket
 import time
-from dataclasses import dataclass, field
 from typing import Optional
 
+import dns.asyncresolver
 import dns.resolver
 import requests
 
-PUBLIC_RESOLVERS: dict[str, str] = {
-    "Google": "8.8.8.8",
-    "Cloudflare": "1.1.1.1",
-}
-
-DEFAULT_DOMAINS = [
-    "google.com",
-    "twitter.com",
-    "facebook.com",
-    "wikipedia.org",
-    "reddit.com",
-    "youtube.com",
-    "signal.org",
-    "torproject.org",
-    "bbc.com",
-    "protonmail.com",
-]
-
-HTTP_TIMEOUT = 10
+from ..core.config import Config
+from ..core.types import Finding, Severity
+from .base import BaseModule
 
 
-@dataclass
-class DNSResult:
-    domain: str
-    resolver_name: str
-    resolver_ip: Optional[str]
-    ips: list[str]
-    error: Optional[str] = None
-    timestamp: str = ""
+class DNSCensorshipModule(BaseModule):
+    name        = "DNS Censorship"
+    description = (
+        "Compares local ISP DNS answers against Google, Cloudflare, and Quad9. "
+        "Also compares UDP vs TCP DNS to detect injection attacks."
+    )
 
+    async def run(self, config: Config):
+        sem = asyncio.Semaphore(config.concurrency)
+        tasks = [
+            self._check_domain(domain, config, sem)
+            for domain in config.domains
+        ]
+        nested: list[list[Finding]] = await asyncio.gather(*tasks)
+        findings = [f for group in nested for f in group]
+        return self._result(findings)
 
-@dataclass
-class ReachabilityResult:
-    domain: str
-    protocol: str
-    status_code: Optional[int] = None
-    reachable: bool = False
-    error: Optional[str] = None
-    latency_ms: Optional[float] = None
-    timestamp: str = ""
+    # ── per-domain orchestration ───────────────────────────────────────────────
 
+    async def _check_domain(self,
+                             domain: str,
+                             config: Config,
+                             sem: asyncio.Semaphore) -> list[Finding]:
+        async with sem:
+            findings: list[Finding] = []
 
-@dataclass
-class DomainReport:
-    domain: str
-    local_result: Optional[DNSResult] = None
-    public_results: list[DNSResult] = field(default_factory=list)
-    mismatch: bool = False
-    mismatch_details: str = ""
-    reachability: list[ReachabilityResult] = field(default_factory=list)
+            # Resolve concurrently across all resolvers
+            resolver_map = {"Local/ISP": None, **config.public_resolvers}
+            tasks = {
+                name: self._resolve(domain, server)
+                for name, server in resolver_map.items()
+            }
+            results: dict[str, list[str] | str] = {}
+            for name, coro in tasks.items():
+                results[name] = await coro   # keep ordered; fast enough
 
+            local_ips  = results["Local/ISP"]
+            public_all: set[str] = set()
+            for name, ips in results.items():
+                if name != "Local/ISP" and isinstance(ips, list):
+                    public_all.update(ips)
 
-def _ts() -> str:
-    return time.strftime("%Y-%m-%dT%H:%M:%S%z")
+            # Compare local vs public
+            findings += self._compare(domain, local_ips, public_all, results)
 
+            # UDP vs TCP comparison (anti-injection)
+            findings += await self._udp_vs_tcp(domain)
 
-def _resolve_with(domain: str, server: Optional[str], name: str) -> DNSResult:
-    """Resolve *domain* using a specific DNS server (or system default)."""
-    resolver = dns.resolver.Resolver()
-    if server:
+            # Reachability
+            if config.test_reachability:
+                findings += await asyncio.to_thread(
+                    self._reachability, domain)
+
+            return findings
+
+    # ── DNS resolution ─────────────────────────────────────────────────────────
+
+    async def _resolve(self,
+                       domain: str,
+                       server: Optional[str]) -> list[str] | str:
+        resolver = dns.asyncresolver.Resolver()
+        if server:
+            resolver.nameservers = [server]
+        resolver.lifetime = 5.0
+        try:
+            answers = await resolver.resolve(domain, "A")
+            return sorted(rdata.address for rdata in answers)
+        except Exception as exc:
+            return f"ERROR:{exc}"
+
+    async def _udp_vs_tcp(self, domain: str) -> list[Finding]:
+        """Resolve via UDP and TCP to the same public server; flag mismatches."""
+        server = "8.8.8.8"
+        try:
+            udp_ips = await self._resolve(domain, server)
+
+            # TCP DNS on port 53
+            tcp_ips: list[str] = await asyncio.to_thread(
+                self._resolve_tcp, domain, server)
+
+            if isinstance(udp_ips, str) or isinstance(tcp_ips, str):
+                return []
+
+            if set(udp_ips) != set(tcp_ips):
+                return [self._finding(
+                    title=f"UDP/TCP DNS mismatch for {domain}",
+                    detail=(
+                        f"Google's DNS server returned different IPs over UDP "
+                        f"({', '.join(udp_ips)}) vs TCP "
+                        f"({', '.join(tcp_ips)}). TCP responses are cryptographically "
+                        f"harder to forge — this mismatch strongly suggests DNS "
+                        f"injection or packet manipulation on the UDP channel."
+                    ),
+                    severity=Severity.HIGH,
+                    category="DNS",
+                    domain=domain,
+                    udp_ips=udp_ips, tcp_ips=tcp_ips,
+                )]
+        except Exception:
+            pass
+        return []
+
+    @staticmethod
+    def _resolve_tcp(domain: str, server: str) -> list[str]:
+        import dns.resolver as _res
+        resolver = _res.Resolver()
         resolver.nameservers = [server]
-    resolver.lifetime = 5.0
+        resolver.lifetime = 5.0
+        # Force TCP
+        resolver.use_tcp = True
+        try:
+            answers = resolver.resolve(domain, "A")
+            return sorted(rdata.address for rdata in answers)
+        except Exception:
+            return []
 
-    try:
-        answers = resolver.resolve(domain, "A")
-        ips = sorted(rdata.address for rdata in answers)
-        return DNSResult(domain=domain, resolver_name=name,
-                         resolver_ip=server, ips=ips, timestamp=_ts())
-    except Exception as exc:
-        return DNSResult(domain=domain, resolver_name=name,
-                         resolver_ip=server, ips=[], error=str(exc),
-                         timestamp=_ts())
+    # ── comparison logic ───────────────────────────────────────────────────────
 
+    def _compare(self,
+                 domain: str,
+                 local: list[str] | str,
+                 public_all: set[str],
+                 all_results: dict) -> list[Finding]:
+        findings = []
 
-def _check_reachability(domain: str, protocol: str) -> ReachabilityResult:
-    url = f"{protocol}://{domain}"
-    try:
-        start = time.monotonic()
-        resp = requests.get(url, timeout=HTTP_TIMEOUT, allow_redirects=True,
-                            headers={"User-Agent": "NetProbe/1.0"})
-        latency = (time.monotonic() - start) * 1000
-        return ReachabilityResult(
-            domain=domain, protocol=protocol, status_code=resp.status_code,
-            reachable=resp.status_code < 500, latency_ms=round(latency, 1),
-            timestamp=_ts(),
-        )
-    except Exception as exc:
-        return ReachabilityResult(
-            domain=domain, protocol=protocol, error=str(exc), timestamp=_ts(),
-        )
+        local_error = isinstance(local, str) and local.startswith("ERROR:")
+        has_public  = bool(public_all)
 
+        if local_error and has_public:
+            findings.append(self._finding(
+                title=f"DNS blocked for {domain}",
+                detail=(
+                    f"Your ISP's DNS server could not resolve {domain}, "
+                    f"but Google, Cloudflare, and Quad9 all found it successfully. "
+                    f"This is the simplest form of DNS-based censorship: your ISP is "
+                    f"refusing to tell you where the site is."
+                ),
+                severity=Severity.HIGH,
+                category="DNS",
+                domain=domain,
+                local_error=str(local),
+            ))
+            return findings
 
-def _ips_differ_significantly(local_ips: list[str],
-                              public_ips: list[str]) -> bool:
-    """
-    Heuristic: if there is zero overlap between IP sets the result is
-    suspicious.  Partial overlap (CDN fan-out) is considered normal.
-    """
-    if not local_ips or not public_ips:
-        return True
-    return len(set(local_ips) & set(public_ips)) == 0
+        if local_error or not local:
+            return findings  # both sides failed — network issue, not censorship
 
+        local_ips = local if isinstance(local, list) else []
 
-def _subnet(ip: str) -> str:
-    parts = ip.split(".")
-    return ".".join(parts[:3])
+        overlap = set(local_ips) & public_all
+        if not overlap and public_all:
+            # Check if they're even in the same /24
+            def subnet(ip): return ".".join(ip.split(".")[:3])
+            local_nets  = {subnet(ip) for ip in local_ips}
+            public_nets = {subnet(ip) for ip in public_all}
+            same_nets   = local_nets & public_nets
 
-
-def _subnets_differ(local_ips: list[str], public_ips: list[str]) -> bool:
-    """Check whether resolved IPs are even in different /24 subnets."""
-    local_nets = {_subnet(ip) for ip in local_ips}
-    public_nets = {_subnet(ip) for ip in public_ips}
-    return len(local_nets & public_nets) == 0
-
-
-def run(domains: Optional[list[str]] = None,
-        test_reachability: bool = False,
-        progress_callback=None) -> list[DomainReport]:
-    """
-    Run DNS censorship checks for every domain in *domains*.
-
-    Returns a list of `DomainReport` objects with mismatch analysis and
-    optional reachability results.
-    """
-    if domains is None:
-        domains = DEFAULT_DOMAINS
-
-    reports: list[DomainReport] = []
-
-    for idx, domain in enumerate(domains, 1):
-        if progress_callback:
-            progress_callback(f"[DNS] ({idx}/{len(domains)}) checking {domain}")
-
-        report = DomainReport(domain=domain)
-
-        report.local_result = _resolve_with(domain, None, "Local/ISP")
-
-        for name, ip in PUBLIC_RESOLVERS.items():
-            report.public_results.append(_resolve_with(domain, ip, name))
-
-        all_public_ips: set[str] = set()
-        for pr in report.public_results:
-            all_public_ips.update(pr.ips)
-
-        local_ips = report.local_result.ips
-
-        if report.local_result.error and not any(
-                pr.error for pr in report.public_results):
-            report.mismatch = True
-            report.mismatch_details = (
-                "Local DNS resolution failed while public resolvers succeeded "
-                "— possible DNS-level block."
+            severity = Severity.HIGH if not same_nets else Severity.MEDIUM
+            detail = (
+                f"Your ISP says {domain} is at {', '.join(local_ips)}, but "
+                f"Google/Cloudflare/Quad9 say it's at "
+                f"{', '.join(sorted(public_all))}. "
             )
-        elif _ips_differ_significantly(local_ips, list(all_public_ips)):
-            report.mismatch = True
-            if _subnets_differ(local_ips, list(all_public_ips)):
-                report.mismatch_details = (
-                    f"IPs from local resolver ({', '.join(local_ips)}) are in "
-                    f"entirely different subnets from public resolvers "
-                    f"({', '.join(sorted(all_public_ips))}) — likely DNS "
-                    f"tampering."
+            if not same_nets:
+                detail += (
+                    "These are in entirely different network blocks — very likely "
+                    "DNS tampering that redirects you to a different server."
                 )
             else:
-                report.mismatch_details = (
-                    f"No IP overlap: local={', '.join(local_ips)} vs "
-                    f"public={', '.join(sorted(all_public_ips))}. Could be "
-                    f"geo-routing or manipulation."
+                detail += (
+                    "They're in the same network range, which could be normal "
+                    "geographic routing — but combined with other findings warrants attention."
                 )
+            findings.append(self._finding(
+                title=f"DNS mismatch for {domain}",
+                detail=detail,
+                severity=severity,
+                category="DNS",
+                domain=domain,
+                local_ips=local_ips,
+                public_ips=sorted(public_all),
+            ))
+        else:
+            findings.append(self._clean(
+                f"{domain}: DNS consistent across all resolvers", "DNS", domain))
 
-        if test_reachability:
-            for proto in ("http", "https"):
-                report.reachability.append(_check_reachability(domain, proto))
+        return findings
 
-        reports.append(report)
+    # ── reachability ───────────────────────────────────────────────────────────
 
-    return reports
+    def _reachability(self, domain: str) -> list[Finding]:
+        findings = []
+        for proto in ("http", "https"):
+            url = f"{proto}://{domain}"
+            try:
+                start = time.monotonic()
+                resp  = requests.get(url, timeout=10, allow_redirects=True,
+                                     headers={"User-Agent": "NetProbe/2.0"})
+                ms    = (time.monotonic() - start) * 1000
+                if resp.status_code >= 400:
+                    findings.append(self._finding(
+                        title=f"{domain} returns HTTP {resp.status_code} over {proto.upper()}",
+                        detail=(
+                            f"The server responded with an error code "
+                            f"({resp.status_code}), which may indicate a block page."
+                        ),
+                        severity=Severity.MEDIUM,
+                        category="REACHABILITY",
+                        domain=domain,
+                        status_code=resp.status_code,
+                        latency_ms=round(ms, 1),
+                    ))
+                else:
+                    findings.append(self._clean(
+                        f"{domain} reachable over {proto.upper()} "
+                        f"({resp.status_code}, {ms:.0f} ms)", "REACHABILITY", domain))
+            except requests.exceptions.SSLError as e:
+                findings.append(self._finding(
+                    title=f"SSL error reaching {domain} over HTTPS",
+                    detail=(
+                        f"The TLS handshake failed: {e}. "
+                        f"This can indicate certificate forgery or a misconfigured "
+                        f"interception proxy."
+                    ),
+                    severity=Severity.HIGH,
+                    category="REACHABILITY",
+                    domain=domain,
+                    error=str(e),
+                ))
+            except Exception as e:
+                findings.append(self._finding(
+                    title=f"{domain} unreachable over {proto.upper()}",
+                    detail=f"Connection failed: {e}",
+                    severity=Severity.MEDIUM,
+                    category="REACHABILITY",
+                    domain=domain,
+                    error=str(e),
+                ))
+        return findings
